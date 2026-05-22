@@ -199,27 +199,27 @@
             bottom: 0;
             left: 0;
             width: 100%;
-            height: 180px;
+            height: 150px;
             z-index: 200;
             pointer-events: none;
         }
         #dpad {
             position: absolute;
-            left: 20px;
-            bottom: 20px;
-            width: 140px;
-            height: 140px;
+            left: 15px;
+            bottom: 10px;
+            width: 130px;
+            height: 130px;
             pointer-events: all;
         }
         .dpad-btn {
             position: absolute;
-            width: 46px;
-            height: 46px;
+            width: 44px;
+            height: 44px;
             background: rgba(255,255,255,0.25);
             border: 2px solid rgba(255,255,255,0.4);
             border-radius: 10px;
             color: white;
-            font-size: 20px;
+            font-size: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -230,22 +230,22 @@
         .dpad-btn:active, .dpad-btn.pressed {
             background: rgba(255,255,255,0.5);
         }
-        .dpad-up { left: 47px; top: 0; }
-        .dpad-down { left: 47px; bottom: 0; }
-        .dpad-left { left: 0; top: 47px; }
-        .dpad-right { right: 0; top: 47px; }
+        .dpad-up { left: 43px; top: 0; }
+        .dpad-down { left: 43px; bottom: 0; }
+        .dpad-left { left: 0; top: 43px; }
+        .dpad-right { right: 0; top: 43px; }
         
         #fireBtn {
             position: absolute;
-            right: 30px;
-            bottom: 40px;
-            width: 70px;
-            height: 70px;
+            right: 20px;
+            bottom: 30px;
+            width: 65px;
+            height: 65px;
             border-radius: 50%;
             background: rgba(255, 80, 80, 0.4);
             border: 3px solid rgba(255, 80, 80, 0.6);
             color: white;
-            font-size: 22px;
+            font-size: 20px;
             font-weight: bold;
             display: flex;
             align-items: center;
@@ -264,8 +264,34 @@
             #mobileControls {
                 display: block !important;
             }
-            body {
-                padding-bottom: 180px;
+        }
+        
+        /* 横屏手柄紧凑模式 */
+        @media (pointer: coarse) and (orientation: landscape) and (max-height: 500px) {
+            #mobileControls {
+                height: 110px;
+            }
+            #dpad {
+                width: 100px;
+                height: 100px;
+                left: 10px;
+                bottom: 5px;
+            }
+            .dpad-btn {
+                width: 34px;
+                height: 34px;
+                font-size: 14px;
+            }
+            .dpad-up { left: 33px; top: 0; }
+            .dpad-down { left: 33px; bottom: 0; }
+            .dpad-left { left: 0; top: 33px; }
+            .dpad-right { right: 0; top: 33px; }
+            #fireBtn {
+                width: 50px;
+                height: 50px;
+                right: 10px;
+                bottom: 15px;
+                font-size: 16px;
             }
         }
 
@@ -1305,12 +1331,30 @@
             
             // Responsive canvas scaling
             function resizeCanvas() {
-                const container = document.getElementById('gameContainer');
                 const canvas = document.getElementById('gameCanvas');
-                const maxWidth = Math.min(window.innerWidth, 850);
-                if (window.innerWidth <= 850) {
-                    canvas.style.width = maxWidth + 'px';
-                    canvas.style.height = (maxWidth * 0.75) + 'px';
+                const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+                
+                if (isTouchDevice || window.innerWidth <= 850) {
+                    const w = window.innerWidth;
+                    const h = window.innerHeight;
+                    // 横屏时高度紧张，按可用高度反算宽度
+                    const isLandscape = w > h;
+                    let controlsHeight = isLandscape && h <= 500 ? 110 : 150;
+                    const availH = h - controlsHeight;
+                    const canvasRatio = 800 / 600; // 4:3
+                    
+                    // 按宽度缩放
+                    let scaleW = w;
+                    let scaleH = w / canvasRatio;
+                    
+                    // 如果高度溢出，改按高度缩放
+                    if (scaleH > availH) {
+                        scaleH = availH;
+                        scaleW = availH * canvasRatio;
+                    }
+                    
+                    canvas.style.width = scaleW + 'px';
+                    canvas.style.height = scaleH + 'px';
                 } else {
                     canvas.style.width = '';
                     canvas.style.height = '';
