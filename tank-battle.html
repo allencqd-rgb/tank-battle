@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>坦克大战 - Battle City</title>
     <style>
         * {
@@ -156,6 +156,119 @@
             margin: 0 5px;
             border-radius: 3px;
         }
+    
+        /* 移动端适配 */
+        @media (max-width: 850px) {
+            body {
+                align-items: flex-start;
+                padding-top: 0;
+            }
+            #gameContainer {
+                width: 100vw;
+                max-width: 850px;
+            }
+            #gameCanvas {
+                width: 100vw !important;
+                height: auto !important;
+                border: none;
+            }
+            .ui-panel {
+                font-size: 11px;
+                padding: 5px 8px;
+            }
+            .screen-title {
+                font-size: 28px;
+            }
+            .screen-subtitle {
+                font-size: 14px;
+            }
+            .btn {
+                padding: 12px 30px;
+                font-size: 16px;
+            }
+            .controls-info {
+                font-size: 12px;
+                margin-top: 15px;
+            }
+        }
+        
+        /* 虚拟手柄 */
+        #mobileControls {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 180px;
+            z-index: 200;
+            pointer-events: none;
+        }
+        #dpad {
+            position: absolute;
+            left: 20px;
+            bottom: 20px;
+            width: 140px;
+            height: 140px;
+            pointer-events: all;
+        }
+        .dpad-btn {
+            position: absolute;
+            width: 46px;
+            height: 46px;
+            background: rgba(255,255,255,0.25);
+            border: 2px solid rgba(255,255,255,0.4);
+            border-radius: 10px;
+            color: white;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+        }
+        .dpad-btn:active, .dpad-btn.pressed {
+            background: rgba(255,255,255,0.5);
+        }
+        .dpad-up { left: 47px; top: 0; }
+        .dpad-down { left: 47px; bottom: 0; }
+        .dpad-left { left: 0; top: 47px; }
+        .dpad-right { right: 0; top: 47px; }
+        
+        #fireBtn {
+            position: absolute;
+            right: 30px;
+            bottom: 40px;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: rgba(255, 80, 80, 0.4);
+            border: 3px solid rgba(255, 80, 80, 0.6);
+            color: white;
+            font-size: 22px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: all;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+        }
+        #fireBtn:active, #fireBtn.pressed {
+            background: rgba(255, 80, 80, 0.7);
+            transform: scale(0.95);
+        }
+        
+        @media (pointer: coarse), (max-width: 850px) {
+            #mobileControls {
+                display: block !important;
+            }
+            body {
+                padding-bottom: 180px;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -201,6 +314,17 @@
         <div id="levelCompleteScreen" class="hidden">
             <div class="screen-title">关卡完成!</div>
             <div class="screen-subtitle">准备进入下一关...</div>
+        </div>
+
+        <!-- 移动端虚拟手柄 -->
+        <div id="mobileControls">
+            <div id="dpad">
+                <div class="dpad-btn dpad-up" data-dir="up">▲</div>
+                <div class="dpad-btn dpad-left" data-dir="left">◀</div>
+                <div class="dpad-btn dpad-right" data-dir="right">▶</div>
+                <div class="dpad-btn dpad-down" data-dir="down">▼</div>
+            </div>
+            <div id="fireBtn">🔥</div>
         </div>
     </div>
 
@@ -1124,6 +1248,81 @@
         
         // 初始化游戏
         const game = new TankBattle();
+    
+        // ===== 移动端触控适配 =====
+        (function() {
+            const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || window.innerWidth <= 850;
+            
+            // Prevent default touch behaviors on game area
+            document.body.addEventListener('touchmove', function(e) {
+                if (game.gameState === 'playing') e.preventDefault();
+            }, { passive: false });
+            
+            // D-pad buttons
+            const dpadBtns = document.querySelectorAll('.dpad-btn');
+            const keyMap = { 'up': 'w', 'down': 's', 'left': 'a', 'right': 'd' };
+            
+            dpadBtns.forEach(btn => {
+                const dir = btn.dataset.dir;
+                const key = keyMap[dir];
+                
+                btn.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    game.keys[key] = true;
+                    btn.classList.add('pressed');
+                }, { passive: false });
+                
+                btn.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    game.keys[key] = false;
+                    btn.classList.remove('pressed');
+                }, { passive: false });
+                
+                btn.addEventListener('touchcancel', function(e) {
+                    game.keys[key] = false;
+                    btn.classList.remove('pressed');
+                });
+            });
+            
+            // Fire button
+            const fireBtn = document.getElementById('fireBtn');
+            fireBtn.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                game.keys[' '] = true;
+                fireBtn.classList.add('pressed');
+            }, { passive: false });
+            
+            fireBtn.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                game.keys[' '] = false;
+                fireBtn.classList.remove('pressed');
+            }, { passive: false });
+            
+            fireBtn.addEventListener('touchcancel', function() {
+                game.keys[' '] = false;
+                fireBtn.classList.remove('pressed');
+            });
+            
+            // Responsive canvas scaling
+            function resizeCanvas() {
+                const container = document.getElementById('gameContainer');
+                const canvas = document.getElementById('gameCanvas');
+                const maxWidth = Math.min(window.innerWidth, 850);
+                if (window.innerWidth <= 850) {
+                    canvas.style.width = maxWidth + 'px';
+                    canvas.style.height = (maxWidth * 0.75) + 'px';
+                } else {
+                    canvas.style.width = '';
+                    canvas.style.height = '';
+                }
+            }
+            
+            window.addEventListener('resize', resizeCanvas);
+            window.addEventListener('orientationchange', function() {
+                setTimeout(resizeCanvas, 200);
+            });
+            resizeCanvas();
+        })();
     </script>
 </body>
 </html>
